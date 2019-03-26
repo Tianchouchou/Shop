@@ -1,4 +1,5 @@
 ﻿@extends('layout')
+@section('title', '所有商品')
 @section('sidebar')
 <link rel="stylesheet" href="/css/mui.min_1.css">
 <link href="/css/comm.css" rel="stylesheet" type="text/css" />
@@ -52,7 +53,8 @@
             <div class="menu-list-wrapper" id="divSortList">
                 <ul id="sortListUl" class="list"><li sortid='0' class='current'><span class='items'>全部商品</span></li>
                     @foreach($res as $k=>$v)
-                    <li sortid='100' reletype='1' linkaddr='' cate_id="{{$v['cate_id']}}"><span class='items'>{{$v['cate_name']}}</span></li>
+                    <li sortid='100' reletype='1' linkaddr='' cate_id="{{$v['cate_id']}}">
+                        <span class='items'>{{$v['cate_name']}}</span></li>
 
                      @endforeach
                 </ul>
@@ -70,7 +72,7 @@
                 </div>
                 
                 <div class="good-list-inner">
-                    <div id="pullrefresh" class="good-list-box  mui-content mui-scroll-wrapper">
+                    <div class="good-list-box  mui-content mui-scroll-wrapper">
                         <div class="goodList mui-scroll">
                             <ul id="ulGoodsList" class="mui-table-view mui-table-view-chevron">
                                 @foreach($ress as $k=>$v)
@@ -271,8 +273,13 @@
 </script>
 <script>
     $(function () {
-        $('.buycar').click(function () {
-            var userid={{session('userid')}};
+        $(document).on('click','.buycar',function () {
+            var userid="{{session('userid')}}";
+            var buy_num=1;
+            if(userid==''){
+                layer.msg('您还未登录，请登录再试',2);
+                return false;
+            }
             var _this=$(this);
             var goods_id=_this.next('input').val();
             $.ajax({

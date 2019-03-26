@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Model\AddcartModel;
 use App\Model\GoodsModel;
+use Illuminate\Support\Facades\DB;
+use App\Model\AreaModel;
+use App\Model\AddressModel;
 
 class LoginController extends Controller
 {
@@ -106,27 +109,37 @@ class LoginController extends Controller
     {
         $username=session('username');
         $user_id=session('userid');
-        //dd(session('userid'));
+//        dd(session('userid'));
         if($username==''){
             return view('login');
         }else{
             $addcart_model=new AddcartModel();
             $where=[
-                'user_id'=>$user_id
+                'user_id'=>$user_id,
+                'status'=>1
             ];
             $res=$addcart_model->where($where)->get();
             $goods_id=[];
             foreach ($res as $k=>$v){
                 $goods_id[] += $v['goods_id'];
             }
-//            $goodswhere=[
-//                'goods_id'=>['in',$goods_id]
-//            ];
-            $goods_model=new GoodsModel();
-            $result=$goods_model->whereIn('goods_id',$goods_id)->get();
+            $wheres=[
+                'addcart.status'=>1
+            ];
+            $result=DB::table('goods')
+                ->join('addcart','goods.goods_id','=','addcart.goods_id')
+                ->where($wheres)
+                ->whereIn('addcart.goods_id',$goods_id)
+                ->get();
             return view('shopcart',['data'=>$result]);
-        }
 
+        }
+    }
+
+    //没有商品购物车页面
+    public function shopcarts()
+    {
+        return view('shopcarts');
     }
 
     //我的潮购界面
@@ -141,6 +154,7 @@ class LoginController extends Controller
     {
         $goods_id=$request->goods_id;
         $user_id=$request->userid;
+        $buy_num=1;
         if($goods_id==''){
             $data=['font'=>'商品不能为空','num'=>2];
             echo json_encode($data);
@@ -148,16 +162,25 @@ class LoginController extends Controller
         }
         $info=[
             'goods_id'=>$goods_id,
-            'user_id'=>$user_id
+            'user_id'=>$user_id,
+            'buy_num'=>$buy_num
         ];
         $addcart_model=new AddcartModel();
-        //$result=$addcart_model->where('goods_id',$goods_id)->first();
-        //dd($result);
-//        if(!$request){
-//            $data=['font'=>'您已添加过，请去购物车再添加','num'=>2];
-//            echo json_encode($data);exit;
-//        }
-        $res=$addcart_model->insert($info);
+        $where=[
+            'goods_id'=>$goods_id,
+            'user_id'=>$user_id,
+            'status'=>1
+        ];
+        $result=$addcart_model->where($where)->first();
+        if(!empty($result)){
+            //已经添加过，做累加
+            $buy_num=$result['buy_num']+1;
+            $res=$addcart_model->where($where)->update(['buy_num'=>$buy_num]);
+        }else{
+            //未添加过这个商品，追加
+            $res=$addcart_model->insert($info);
+        }
+        ;
         if($res){
             $data=['font'=>'添加成功','num'=>1];
         }else{
@@ -165,6 +188,191 @@ class LoginController extends Controller
         }
         echo json_encode($data);
 
+    }
+
+    //购物车单个商品删除
+    public function goodsdel(Request $request)
+    {
+        $goods_id=$request->goods_id;
+        $user_id=$request->user_id;
+        $addcart_model=new AddcartModel();
+        $where=[
+            'goods_id'=>$goods_id,
+            'user_id'=>$user_id
+        ];
+        $res=DB::table('addcart')
+            ->where($where)
+            ->update(['status' => 2]);
+        if($res){
+            $data=['font'=>'删除成功','num'=>1];
+        }else{
+            $data=['font'=>'删除失败','num'=>2];
+        }
+        echo json_encode($data);
+
+    }
+
+    //收货地址
+    public function mywallet()
+    {
+        //获取当前登录人的id
+        $user_id=session('userid');
+        $where=[
+            'user_id'=>$user_id
+        ];
+        $addressinfo=DB::table('address')
+            ->where($where)
+            ->get();
+        $area_model=new AreaModel();
+        if(!empty($addressinfo)){
+            //处理收货地址的省市县
+            foreach($addressinfo as $k=>$v){
+                $v->province=$area_model->where(['id'=>"$v->province"])->value('name');
+                $v->city=$area_model->where(['id'=>"$v->city"])->value('name');
+                $v->county=$area_model->where(['id'=>"$v->county"])->value('name');
+            }
+        }else{
+            return false;
+        }
+        return view('address',['addressinfo'=>$addressinfo]);
+    }
+
+    //收货地址添加
+    public function addressad()
+    {
+        $add_model=new AreaModel();
+        $areainfo=$add_model->where(['pid'=>0])->get();
+        return view('writeaddr',['areainfo'=>$areainfo]);
+    }
+
+    //收货地址添加信息页面展示
+    public function addressinfo(Request $request)
+    {
+        $id=$request->id;
+        if($id==''){
+            $data=['font'=>'请至少选择其中一项','num'=>2];
+        }
+        $info=$this->getareaInfo($id);
+        echo json_encode(['areaInfo'=>$info,'num'=>1]);
+
+    }
+
+    //获取下一级的城市信息
+    public function getareaInfo($pid)
+    {
+        $area_model=new AreaModel();
+        $where=[
+            'pid'=>$pid
+        ];
+        $res=$area_model->where($where)->get();
+        if($res){
+            return $res;
+        }else{
+            return false;
+        }
+    }
+
+    //收货地址添加
+    public function addresssave(Request $request)
+    {
+        $addressinfo=$request->all();
+        $area_model=new AddressModel();
+        $res=DB::table('address')->insert($addressinfo);
+        if($res){
+            echo 1;
+        }else{
+            echo 2;
+        }
+    }
+
+    //设置默认
+    public function setinfo(Request $request)
+    {
+        $address_id=$request->address_id;
+        $user_id=$request->user_id;
+        $address_model=new AddressModel();
+        $where=[
+            'user_id'=>$user_id,
+            'address_id'=>$address_id
+        ];
+        $up=[
+            'address_id'=>$address_id,
+            'is_default'=>1
+        ];
+        //先修改所有为2，然后点击为1
+        $res=$address_model->where(['user_id'=>$user_id])->update(['is_default'=>2]);
+        $ress=$address_model->where($where)->update($up);
+        if($res&&$ress){
+            echo 1;
+        }else{
+            echo 2;
+        }
+
+    }
+
+    //地址删除
+    public function delinfo(Request $request)
+    {
+        $address_id=$request->address_id;
+        $user_id=$request->user_id;
+        $address_model=new AddressModel();
+        $where=[
+            'user_id'=>$user_id,
+            'address_id'=>$address_id
+        ];
+        $res=$address_model->where($where)->delete();
+        if($res){
+            echo 1;
+        }else{
+            echo 2;
+        }
+    }
+
+    //结账页面
+    public function accounts(Request $request)
+    {
+        $goods_id=$request->goods_id;
+        $user_id=$request->user_id;
+        $goods_model=new GoodsModel();
+        $goods_id=explode(',',$goods_id);
+        $where=[
+            'is_up'=>1,
+            'status'=>1,
+            'user_id'=>$user_id,
+        ];
+        $res=DB::table('goods')
+            ->join('addcart','goods.goods_id','=','addcart.goods_id')
+            ->where($where)
+            ->whereIn('goods.goods_id',$goods_id)
+            ->get();
+        if($res){
+            $data=['font'=>'准备前往结算','num'=>1];
+            echo json_encode($data);
+        }
+    }
+
+    //确认结算页面
+    public function payment(Request $request)
+    {
+        $goods_id=$request->goods_id;
+        $user_id=session('userid');
+        $goods_id=explode(',',$goods_id);
+        $where=[
+            'is_up'=>1,
+            'status'=>1,
+            'user_id'=>$user_id,
+        ];
+        $res=DB::table('goods')
+            ->join('addcart','goods.goods_id','=','addcart.goods_id')
+            ->where($where)
+            ->whereIn('goods.goods_id',$goods_id)
+            ->get();
+        $price=0;
+        foreach ($res as $k=>$v){
+            $price +=$v->buy_num*$v->self_price;
+        }
+
+        return view('payment',['res'=>$res,'price'=>$price]);
     }
 
 }

@@ -1,6 +1,9 @@
 @extends('layout')
+@section('title', '购物车')
 @section('sidebar')
-
+    <script src="js/jquery-1.11.2.min.js"></script>
+    <script src="js/lazyload.min.js"></script>
+    <script src="js/mui.min.js"></script>
 <link href="/css/cartlist.css" rel="stylesheet" type="text/css" />
 <body id="loadingPicBlock" class="g-acc-bg">
     <input name="hidUserID" type="hidden" id="hidUserID" value="-1" />
@@ -8,13 +11,13 @@
         <!--首页头部-->
         <div class="m-block-header">
             <a href="/" class="m-public-icon m-1yyg-icon"></a>
-            <a href="/" class="m-index-icon">编辑</a>
+
         </div>
         <!--首页头部 end-->
         <div class="g-Cart-list">
             <ul id="cartBody">
                 @foreach($data as $k=>$v)
-                <li>
+                <li goods_id="{{$v->goods_id}}">
                     <s class="xuan current"></s>
                     <a class="fl u-Cart-img" href="/v44/product/12501977.do">
                         <img src="{{url('/storage/uploads/goosfile/'.$v->goods_img)}}" border="0" alt="">
@@ -26,7 +29,7 @@
                         </span>
                         <div class="num-opt">
                             <em class="num-mius dis min"><i></i></em>
-                            <input class="text_box" name="num" maxlength="6" type="text" value="1" codeid="12501977">
+                            <input class="text_box" name="num" maxlength="6" type="text" value="{{$v->buy_num}}" codeid="12501977">
                             <em class="num-add add"><i></i></em>
                         </div>
                         <a href="javascript:;" name="delLink" cid="12501977" isover="0" class="z-del"><s></s></a>
@@ -45,7 +48,7 @@
                 </dt>
                 <dd>
                     <a href="javascript:;" id="a_payment" class="orangeBtn w_account remove">删除</a>
-                    <a href="javascript:;" id="a_payment" class="orangeBtn w_account">去结算</a>
+                    <a href="javascript:;" id="a_payments" class="orangeBtn w_account">去结算</a>
                 </dd>
             </dl>
         </div>
@@ -59,7 +62,8 @@
         <li class="f_personal"><a href="/v41/member/index.do" ><i></i>我的潮购</a></li>
     </ul>
 </div>
-
+@csrf
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <script src="js/jquery-1.11.2.min.js"></script>
 <!---商品加减算总数---->
     <script type="text/javascript">
@@ -78,17 +82,16 @@
         })
     })
     </script>
-
-
-
-
     <script>
-
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
     // 全选        
     $(".quanxuan").click(function () {
         if($(this).hasClass('current')){
             $(this).removeClass('current');
-
              $(".g-Cart-list .xuan").each(function () {
                 if ($(this).hasClass("current")) {
                     $(this).removeClass("current"); 
@@ -106,22 +109,16 @@
             });
             GetCount();
         }
-        
-        
     });
     // 单选
     $(".g-Cart-list .xuan").click(function () {
         if($(this).hasClass('current')){
-            
-
             $(this).removeClass('current');
-
         }else{
             $(this).addClass('current');
         }
         if($('.g-Cart-list .xuan.current').length==$('#cartBody li').length){
                 $('.quanxuan').addClass('current');
-
             }else{
                 $('.quanxuan').removeClass('current');
             }
@@ -144,6 +141,54 @@
         
          $(".total").html('<span>￥</span>'+(conts).toFixed(2));
     }
+    //删除商品
+    $('.z-del').click(function () {
+        var _this=$(this);
+        var user_id="{{session('userid')}}";
+        var goods_id=_this.prev('.goods_id').val();
+        if(goods_id==''){
+            alert('您未选择商品');
+        }
+        $.post(
+            "{{'goodsdel'}}",
+            {goods_id:goods_id,user_id:user_id},
+            function (res) {
+                layer.msg(res.font,{icon:res.num});
+                history.go(0)
+            },
+            'json'
+        )
+    })
+     //点击结算
+        $('#a_payments').click(function () {
+            //获取商品id
+            var box=$('.xuan');
+            var goods_id='';
+            var user_id="{{session('userid')}}";
+            box.each(function(index){
+                if($(this).prop('class')=='xuan current'){
+                    goods_id+=$(this).parents('li').attr('goods_id')+',';
+                }
+            });
+            goods_id=goods_id.substr(0,goods_id.length-1);//去除右边的逗号
+            if(goods_id==''){
+                layer.msg('请选择一件商品',{icon:2});
+                return false;
+            }
+            $.post(
+                "{{url('accounts')}}",
+                {goods_id:goods_id,user_id:user_id},
+                function (res) {
+                    if(res.num==1){
+                        layer.msg(res.font,{icon:res.num});
+                        location.href="{{url('payment')}}?goods_id="+goods_id;
+                    }
+
+                },
+                'json'
+            )
+
+        })
     GetCount();
 </script>
     </div>

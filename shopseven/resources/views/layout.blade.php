@@ -21,7 +21,8 @@
     <script src="/js/index.js"></script>
     <script src="/js/lazyload.min.js"></script>
     <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script> <script src="http://cdn.bootcss.com/flexslider/2.6.2/jquery.flexslider.min.js"></script>
-
+    <link href="/css/cartlist.css" rel="stylesheet" type="text/css" />
+    <script src="/layui/layui.js"></script>
 </head>
 <body id="loadingPicBlock" class="g-acc-bg">
 @section('sidebar')
