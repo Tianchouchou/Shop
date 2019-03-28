@@ -72,6 +72,15 @@
             var t = $(this).prev();
             t.val(parseInt(t.val()) + 1);
             GetCount();
+            var buy_num=t.val();
+            var goods_id=$(this).parents('li').attr('goods_id');
+            $.post(
+                "{{url('changenum')}}",
+                {buy_num:buy_num,goods_id:goods_id},
+                function (res) {
+                    console.log(res);
+                }
+            )
         })
         $(".min").click(function () {
             var t = $(this).next();

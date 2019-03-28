@@ -55,14 +55,33 @@ class UserController extends Controller
 
     }
     //全部商品
-    public function show()
+    public function show(Request $request)
     {
+        $cate_id=$request->cate_id;
         $category=new CategoryModel;
-        $res=$category->where('cate_navshow',1)->get();
         $goods_model=new GoodsModel;
-        $ress=$goods_model->get();
+
+        $res=$category->where('cate_navshow',1)->get();//左侧导航
         //dd($res);
-        return view('allshops',['ress'=>$ress,'res'=>$res]);
+        if(empty($cate_id)){
+            $ress=$goods_model->get();
+            return view('allshops',['ress'=>$ress,'res'=>$res]);
+        }else{
+            $cateinfo=$category->get();
+            $res=$this->cateinfo($cateinfo,$cate_id);
+            $goods_model=new GoodsModel;
+            $ids=[];
+            foreach($res as $k=>$v){
+                $ids[]+=$v['cate_id'];
+            }
+            $where=[
+                'cate_id'=>['in',$ids],
+                'is_up'=>1
+            ];
+            $result=$goods_model->whereIn('cate_id',$ids)->where('is_up',1)->get();
+            echo view('allshops',['res'=>$res,'ress'=>$result]);
+        }
+
     }
     //查询子节点 循环查询商品数据
     public function searchson(Request $request)
@@ -73,7 +92,7 @@ class UserController extends Controller
      //dd($cateinfo);
       $res=$this->cateinfo($cateinfo,$cate_id);
       $goods_model=new GoodsModel;
-     $ids=[];
+      $ids=[];
      foreach($res as $k=>$v){
          $ids[]+=$v['cate_id'];
      }

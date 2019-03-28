@@ -277,7 +277,7 @@
             var userid="{{session('userid')}}";
             var buy_num=1;
             if(userid==''){
-                layer.msg('您还未登录，请登录再试',2);
+                layer.msg('您还未登录，请登录再试',{icon:2});
                 return false;
             }
             var _this=$(this);
@@ -298,6 +298,29 @@
                     },2000)
                 }
             });
+        })
+
+        //点击搜索
+        $(document).on('click','.s-icon',function () {
+            var name=$('#txtSearch').val();
+            if(name==''){
+                layer.msg('搜索项不能为空~',{icon:2});
+                return false;
+            }
+            $.post(
+                "{{url('search')}}",
+                {name:name},
+                function (res) {
+                    if(res.num==2){
+                        layer.msg(res.font,{icon:2});
+                    }else{
+                        layer.msg(res.font,{icon:1});
+                        location.href="{{url('searchshow')}}?name="+name;
+                    }
+                },
+                'json'
+            )
+
         })
     })
 </script>

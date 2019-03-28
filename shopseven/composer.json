@@ -37,7 +37,9 @@
         },
         "classmap": [
             "database/seeds",
-            "database/factories"
+            "database/factories",
+            "app/Tools/alipay"
+
         ]
     },
     "autoload-dev": {

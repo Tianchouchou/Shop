@@ -3,7 +3,8 @@
 @section('title', '猪小妹')
 @section('sidebar')
 <body fnav="1" class="g-acc-bg">
-
+<meta name="csrf-token" content="{{ csrf_token() }}">
+@csrf
     <div class="marginB" id="loadingPicBlock">
         <!--首页头部-->
         <div class="m-block-header" style="display: none">
@@ -32,7 +33,7 @@
         		<ul class="slides" style="width: 600%; transition-duration: 0.4s; transform: translate3d(-828px, 0px, 0px);">
         			<li style="width: 414px; float: left; display: block;" class="clone">
         				<a href="http://weixin.1yyg.com/v27/products/23559.do?pf=weixin">
-        					<img src="https://img.1yyg.net/Poster/20170227170302909.png" alt="">
+        					<img src="https://img.alicdn.com/simba/img/TB1T8HJL9rqK1RjSZK9SutyypXa.jpg" alt="">
         				</a>
         			</li>
         			<li class="" style="width: 414px; float: left; display: block;">
@@ -80,38 +81,19 @@
         </script>
         <!--分类-->
         <div class="index-menu thin-bor-top thin-bor-bottom">
+
             <ul class="menu-list">
+				@foreach($info as $k=>$v)
                 <li>
                     <a href="javascript:;" id="btnNew">
                         <i class="xinpin"></i>
-                        <span class="title">新品</span>
+                        <input type="hidden" value="{{$v->cate_id}}">
+                        <span class="title" >{{$v->cate_name}}</span>
                     </a>
                 </li>
-                <li>
-                    <a href="javascript:;" id="btnRecharge">
-                        <i class="chongzhi"></i>
-                        <span class="title">充值</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="javascript:;" id="btnLimitbuy">
-                        <i class="contact"></i>
-                        <span class="title">联系我们</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="javascript:;" id="btnDownApp">
-                        <i class="xiazai"></i>
-                        <span class="title">下载APP</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="javascript:;" id="btnAllGoods">
-                        <i class="fenlei"></i>
-                        <span class="title">晒单</span>
-                    </a>
-                </li>
+				@endforeach
             </ul>
+
         </div>
         <!--导航-->
         <div class="success-tip">
@@ -134,63 +116,7 @@
 				</li>
 			</ul>
         </div>
-        <!-- 倒計時 -->
-        <div class="endtime">
-        	<ul class="endtime-list clearfix">
-        		<li>
-        			<a href="" class="endtime-img"><img src="images/goods1.jpg" alt=""></a>
-        			<p>倒计时</p>
-        			<div class="pro-state">			
-        				<div class="time-wrapper time" value="1500560400">				
-        					<em>02</em>				
-        					<span>:</span>				
-        					<em>24</em>				
-        					<span>:</span>				
-        					<em><i>8</i><i>4</i></em>			
-        				</div>		
-        			</div>
-        		</li>
-        		<li>
-        			<a href="" class="endtime-img"><img src="images/goods1.jpg" alt=""></a>
-        			<p>倒计时</p>
-        			<div class="pro-state">			
-        				<div class="time-wrapper time" value="1500560400">				
-        					<em>02</em>				
-        					<span>:</span>				
-        					<em>24</em>				
-        					<span>:</span>				
-        					<em><i>8</i><i>4</i></em>			
-        				</div>		
-        			</div>
-        		</li>
-        		<li>
-        			<a href="" class="endtime-img"><img src="images/goods1.jpg" alt=""></a>
-        			<p>倒计时</p>
-        			<div class="pro-state">			
-        				<div class="time-wrapper time" value="1500560400">				
-        					<em>02</em>				
-        					<span>:</span>				
-        					<em>24</em>				
-        					<span>:</span>				
-        					<em><i>8</i><i>4</i></em>			
-        				</div>		
-        			</div>
-        		</li>
-        		<li>
-        			<a href="" class="endtime-img"><img src="images/goods1.jpg" alt=""></a>
-        			<p>倒计时</p>
-        			<div class="pro-state">			
-        				<div class="time-wrapper time"  value="1500560400">				
-        					<em>02</em>				
-        					<span>:</span>				
-        					<em>24</em>				
-        					<span>:</span>				
-        					<em><i>8</i><i>4</i></em>			
-        				</div>		
-        			</div>
-        		</li>
-        	</ul>
-        </div>
+
         <!-- 热门推荐 -->
         <div class="line hot">
         	<div class="hot-content">
@@ -245,7 +171,7 @@
             			</p>
             		</div>
             		<div class="btn-wrap" name="buyBox" limitbuy="0" surplus="58" totalnum="1625" alreadybuy="1567">
-            			<a href="javascript:;" id="buy" class="buy-btn" codeid="12751965">立即潮购</a>
+            			<a href="javascript:;" id="buy" class="buy-btn" codeid="12751965" goods_id="{{$v->goods_id}}">立即潮购</a>
             			<div class="gRate" codeid="12751965" canbuy="58">
             				<a href="javascript:;"></a>
             			</div>
@@ -287,8 +213,47 @@
             })
 
         });
-
-
-
 </script>
+    <script>
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+           $('.xinpin').click(function () {
+               var cate_id=$(this).next().val();
+               if(cate_id==''){
+                   layer.msg('未选择商品分类',2);
+               }else{
+                   location.href="{{url('allshops')}}?cate_id="+cate_id;
+               }
+           })
+        $('.buy-btn').click(function () {
+            var user_id="{{session('userid')}}";
+            if(user_id==''){
+                layer.msg('您还未登录，不能购买商品',{icon:2});
+                location.href="{{url('login')}}";
+                return false;
+            }
+            var buy_num=1;
+            var goods_id=$(this).attr('goods_id');
+            $.ajax({
+                method: "post",
+                url:"{{url('addcart')}}",
+                data:{userid:user_id,goods_id:goods_id},
+                async:false,
+                dataType:'json'
+            }).done(function( res ) {
+                if(res.num==2){
+                    layer.msg(res.font,{icon:res.num});
+                }else{
+                    layer.msg(res.font,{icon:res.num});
+                    setTimeout(function(){
+                        location.href = "cart";
+                    },2000)
+                }
+            });
+        })
+
+    </script>
 @endsection

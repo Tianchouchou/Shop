@@ -375,4 +375,77 @@ class LoginController extends Controller
         return view('payment',['res'=>$res,'price'=>$price]);
     }
 
+    //搜索
+    public function search(Request $request)
+    {
+        $name=$request->name;
+        if($name==''){
+            $data=['font'=>'不好意思，搜索项不能为空哦','num'=>2];
+            echo json_encode($data);
+        }
+        $res=Db::table('goods')
+            ->where('goods_name','like',"%$name%")
+            ->get();
+        //dd($res);
+        if($res->first()){
+            //yes
+            $data=['font'=>'查询到数据准备跳转','num'=>1];
+            echo json_encode($data);
+            //return view('search',['res'=>$res]);
+        }else{
+            $data=['font'=>'搜索结果为空','num'=>2];
+            echo json_encode($data);
+        }
+    }
+
+    //搜索页面展示
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View|\think\response\View
+     */
+    public function searchshow(Request $request)
+    {
+        $name=$request->name;
+        $res=Db::table('goods')
+            ->where('goods_name','like',"%$name%")
+            ->get();
+        return view('search',['res'=>$res]);
+    }
+
+    //同步
+    public function tong()
+    {
+        echo 1;
+    }
+    //异步
+    public function yi()
+    {
+        echo 2;
+    }
+
+    //加号减号改变购买量
+    public function changenum(Request $request)
+    {
+        $buy_num=$request->buy_num;
+        $goods_id=$request->goods_id;
+        $user_id=session('userid');
+        if($buy_num==''){
+            $data=['font'=>'购买数量不能为空','num'=>2];
+            exit;
+        }else if($goods_id==''){
+            $data=['font'=>'您还未登陆','num'=>2];
+            exit;
+        }else if($goods_id==’){
+            $data=['font'=>'商品不能为空','num'=>2];
+            exit;
+        }
+        $where=[
+            'user_id'=>$user_id,
+            'goods_id'=>$goods_id
+        ];
+        $up=[
+            'buy_num'=>$buy_num
+        ];
+    }
 }

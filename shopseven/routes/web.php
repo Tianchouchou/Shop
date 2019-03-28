@@ -12,7 +12,8 @@
 
 Route::get('/', function () {
     $res= \App\Model\Goods::get();
-    return view('Index',['data'=>$res]);
+    $info= \App\Model\CategoryModel::where(['pid'=>0])->limit(5)->get();
+    return view('Index',['data'=>$res,'info'=>$info]);
 });
 
 //路由组
@@ -71,6 +72,18 @@ Route::prefix('/')->group(function () {
     route::any('accounts','Shop\LoginController@accounts');
     //确认结算
     route::any('payment','Shop\LoginController@payment');
+    //搜索
+    route::any('search','Shop\LoginController@search');
+    //搜索结果展示
+    route::any('searchshow','Shop\LoginController@searchshow');
+    //沙箱异步
+    route::any('yi','Shop\LoginController@yi');
+    //沙箱同步
+    route::any('tong','Shop\LoginController@tong');
+    //沙箱支付
+    route::any('show','PayController@shows');
+    //加号减号改变库存
+    route::any('changenum','Shop\LoginController@changenum');
 });
 
 //验证码路由
