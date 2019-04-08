@@ -84,6 +84,8 @@ Route::prefix('/')->group(function () {
     route::any('show','PayController@shows');
     //加号减号改变库存
     route::any('changenum','Shop\LoginController@changenum');
+    //保存access_token
+    route::any('savetoken','WeixinController@savetoken');
 });
 
 //验证码路由
@@ -91,3 +93,12 @@ route::any('create','CodeController@create');
 //商品详情
 Route::any('/goods/shop','GoodsController@shopcontent');
 
+//memcached
+Route::any('index','TestController@index');
+
+//redios
+Route::any('indext','TestController@indext');
+//redisB
+Route::any('indexb','TestController@indexb');
+//redisB
+Route::any('changepwd','TestController@changepwd');

@@ -448,4 +448,10 @@ class LoginController extends Controller
             'buy_num'=>$buy_num
         ];
     }
+
+    //微信公众号接口
+    public function jiekou()
+    {
+        return view('jiekou');
+    }
 }
